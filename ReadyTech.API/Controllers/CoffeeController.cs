@@ -13,17 +13,15 @@ public class CoffeeController : ControllerBase
     [HttpGet("/brew-coffee")]
     public IActionResult BrewCoffee()
     {
-        requestCount++;
-
         // Check if it's 1st April
         if (DateTimeService.Now.Day == 1 && DateTimeService.Now.Month == 4)
             return StatusCode(418, null); // I'm a teapot
-        //return StatusCode(418, "I'm a teapot");
+
+        requestCount++;
 
         // Check if every 5th call
         if (requestCount % 5 == 0)
             return StatusCode(503, null);
-            //return StatusCode(503, "Service Unavailable");
 
         var response = new StatusMessage
         {
