@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Moq;
 using ReadyTech.API.Controllers;
 using ReadyTech.API.Models;
 using ReadyTech.API.Services;
@@ -10,47 +11,79 @@ namespace ReadyTech.Test;
 public class CoffeeControllerUnitTests
 {
     [Fact]
-    public void BrewCoffee_NormalCase_ReturnsOK()
+    public async Task BrewCoffee_NormalCase_ReturnsHotCoffee()
     {
         // Arrange
-        var controller = new CoffeeController();
+        var weatherServiceMock = new Mock<IWeatherService>();
+        weatherServiceMock.Setup(x => x.GetCurrentTemperatureAsync()).ReturnsAsync(25);
+        
+        var controller = new CoffeeController(weatherServiceMock.Object);
 
         // Act
-        var result = controller.BrewCoffee() as OkObjectResult;
+        var result = await controller.BrewCoffeeAsync();
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(200, result.StatusCode);
+        Assert.IsType<OkObjectResult>(result);
 
-        var response = JsonSerializer.Deserialize<StatusMessage>(result.Value.ToString());
-        Assert.Equal("Your piping hot coffee is ready", response.Message.ToString());
-        //Assert.NotNull(DateTimeOffset.Parse(response.Prepared.ToString()));
+        var response = ((OkObjectResult)result).Value.ToString();
+        var responseObject = JsonSerializer.Deserialize<StatusMessage>(response);
+        Assert.Equal("Your piping hot coffee is ready", responseObject.Message);
     }
 
     [Fact]
-    public void BrewCoffee_FifthRequest_Returns503ServiceUnavailable()
+    public async Task BrewCoffee_NormalCase_ReturnsIcedCoffee()
     {
-        var controller = new CoffeeController();
+        // Arrange
+        var weatherServiceMock = new Mock<IWeatherService>();
+        weatherServiceMock.Setup(x => x.GetCurrentTemperatureAsync()).ReturnsAsync(35);
+
+        var controller = new CoffeeController(weatherServiceMock.Object);
+
+        // Act
+        var result = await controller.BrewCoffeeAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.IsType<OkObjectResult>(result);
+
+        var response = ((OkObjectResult)result).Value.ToString();
+        var responseObject = JsonSerializer.Deserialize<StatusMessage>(response);
+        Assert.Equal("Your refreshing iced coffee is ready", responseObject.Message);
+    }
+
+    [Fact]
+    public async Task BrewCoffee_FifthRequest_Returns503ServiceUnavailable()
+    {
+        var weatherServiceMock = new Mock<IWeatherService>();
+        var controller = new CoffeeController(weatherServiceMock.Object);
 
         for (var i = 0; i < 4; i++)
-            controller.BrewCoffee();
-        var result = controller.BrewCoffee() as StatusCodeResult;
+            await controller.BrewCoffeeAsync();
+        var result = await controller.BrewCoffeeAsync();
 
-        Assert.Null(result);
-        //Assert.Equal(503, (int)result.StatusCode);
+        Assert.NotNull(result);
+        Assert.IsType<StatusCodeResult>(result);
+
+        var statusCode = ((StatusCodeResult)result).StatusCode;
+        Assert.Equal(503, statusCode);
     }
 
     [Fact]
-    public void BrewCoffee_1stApril_Returns418ImATeapot()
+    public async void BrewCoffee_1stApril_Returns418ImATeapot()
     {
-        var controller = new CoffeeController();
+        var weatherServiceMock = new Mock<IWeatherService>();
+        var controller = new CoffeeController(weatherServiceMock.Object);
 
         var now = new DateTime(2022, 4, 1);
         DateTimeService.SetCurrentDateTime(now);
-        var result = controller.BrewCoffee() as StatusCodeResult;
+        var result = await controller.BrewCoffeeAsync();
         DateTimeService.ResetDateTime();
 
-        Assert.Null(result);
-        //Assert.Equal(418, (int)result.StatusCode);
+        Assert.NotNull(result);
+        Assert.IsType<StatusCodeResult>(result);
+
+        var statusCode = ((StatusCodeResult)result).StatusCode;
+        Assert.Equal(418, statusCode);
     }
 }
