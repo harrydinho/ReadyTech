@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ReadyTech.API.Models;
 using ReadyTech.API.Services;
+using System.Text.Json;
 
 namespace ReadyTech.API.Controllers;
 
@@ -15,13 +16,13 @@ public class CoffeeController : ControllerBase
     {
         // Check if it's 1st April
         if (DateTimeService.Now.Day == 1 && DateTimeService.Now.Month == 4)
-            return StatusCode(418, null); // I'm a teapot
+            return StatusCode(418); // I'm a teapot
 
         requestCount++;
 
         // Check if every 5th call
         if (requestCount % 5 == 0)
-            return StatusCode(503, null);
+            return StatusCode(503);
 
         var response = new StatusMessage
         {
@@ -29,6 +30,6 @@ public class CoffeeController : ControllerBase
             Prepared = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:sszzz")
         };
 
-        return Ok(response);
+        return Ok(JsonSerializer.Serialize(response));
     }
 }

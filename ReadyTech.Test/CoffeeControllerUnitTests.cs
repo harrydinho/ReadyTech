@@ -16,15 +16,16 @@ public class CoffeeControllerUnitTests
         var controller = new CoffeeController();
 
         // Act
-        var result = controller.BrewCoffee() as OkObjectResult;
+        var result = controller.BrewCoffee();
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(200, result.StatusCode);
+        Assert.IsType<OkObjectResult>(result);
 
-        var response = JsonSerializer.Deserialize<StatusMessage>(result.Value.ToString());
-        Assert.Equal("Your piping hot coffee is ready", response.Message.ToString());
-        //Assert.NotNull(DateTimeOffset.Parse(response.Prepared.ToString()));
+        var response = ((OkObjectResult)result).Value.ToString();
+        var responseObject = JsonSerializer.Deserialize<StatusMessage>(response);
+        Assert.Equal("Your piping hot coffee is ready", responseObject.Message);
+        Assert.NotNull(DateTimeOffset.Parse(responseObject.Prepared));
     }
 
     [Fact]
@@ -34,10 +35,13 @@ public class CoffeeControllerUnitTests
 
         for (var i = 0; i < 4; i++)
             controller.BrewCoffee();
-        var result = controller.BrewCoffee() as StatusCodeResult;
+        var result = controller.BrewCoffee();
 
-        Assert.Null(result);
-        //Assert.Equal(503, (int)result.StatusCode);
+        Assert.NotNull(result);
+        Assert.IsType<StatusCodeResult>(result);
+
+        var statusCode = ((StatusCodeResult)result).StatusCode;
+        Assert.Equal(503, statusCode);
     }
 
     [Fact]
@@ -47,10 +51,13 @@ public class CoffeeControllerUnitTests
 
         var now = new DateTime(2022, 4, 1);
         DateTimeService.SetCurrentDateTime(now);
-        var result = controller.BrewCoffee() as StatusCodeResult;
+        var result = controller.BrewCoffee();
         DateTimeService.ResetDateTime();
 
-        Assert.Null(result);
-        //Assert.Equal(418, (int)result.StatusCode);
+        Assert.NotNull(result);
+        Assert.IsType<StatusCodeResult>(result);
+
+        var statusCode = ((StatusCodeResult)result).StatusCode;
+        Assert.Equal(418, statusCode);
     }
 }

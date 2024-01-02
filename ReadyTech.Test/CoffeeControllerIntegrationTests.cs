@@ -26,24 +26,4 @@ public class CoffeeControllerIntegrationTests : IClassFixture<WebApplicationFact
         var responseObject = JsonSerializer.Deserialize<StatusMessage>(result);
         Assert.Equal("Your piping hot coffee is ready", responseObject.Message.ToString());
     }
-
-    [Fact]
-    public async Task BrewCoffee_FifthRequest_Returns503ServiceUnavailable()
-    {
-        var client = factory.CreateClient();
-
-        for (int i = 0; i < 4; i++)
-            await client.GetAsync("/brew-coffee");
-        var response = await client.GetAsync("/brew-coffee");
-
-        Assert.Equal(System.Net.HttpStatusCode.ServiceUnavailable, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task BrewCoffee_1stApril_Returns418ImATeapot()
-    {
-        var client = factory.CreateClient();
-        var response = await client.GetAsync("/brew-coffee");
-        Assert.Equal(418, (int)response.StatusCode);
-    }
 }
